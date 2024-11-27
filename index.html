@@ -7,9 +7,6 @@
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database-compat.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     .container {
       display: flex;
@@ -29,13 +26,34 @@
       padding: 10px;
       font-size: 16px;
     }
-    .auth-section {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      margin-bottom: 20px;
-    }
     .auth-section button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 300px;
+    }
+    .modal-content img {
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+    .modal-content button {
+      margin-top: 10px;
       padding: 10px 20px;
       font-size: 16px;
     }
@@ -44,28 +62,22 @@
 <body>
   <div class="container">
     <div class="tab">
-      <button id="modeButton" onclick="selectTab()">註冊</button>
+      <button id="actionButton">註冊</button>
+      <button onclick="selectTab('login')">登入</button>
+    </div>
+    <div class="auth-section">
       <button onclick="authenticateWithGoogle()">認證</button>
     </div>
   </div>
 
-  <!-- Bootstrap Modal -->
-  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="userModalLabel">會員資料</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p id="userName">姓名: </p>
-          <p id="userEmail">Email: </p>
-          <img id="userPhoto" alt="User Photo" width="100" />
-          <p id="lastLogin">最後登入時間: </p>
-        </div>
-      </div>
+  <!-- 模組對話框 -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <img id="modalUserPhoto" alt="User Photo" width="100">
+      <p id="modalUserName">姓名: </p>
+      <p id="modalUserEmail">Email: </p>
+      <p id="modalLastLogin">最後登入時間: </p>
+      <button onclick="closeModal()">關閉</button>
     </div>
   </div>
 
@@ -84,33 +96,26 @@
     const auth = firebase.auth();
     const database = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
-    
-    let currentMode = "register";
 
-    function selectTab() {
-      if (currentMode === "register") {
-        document.getElementById("modeButton").innerText = "查看會員資料";
-        currentMode = "view";
-        console.log("模式切換至查看會員資料");
-      } else {
-        $('#userModal').modal('show');
-        console.log("顯示會員資料模態視窗");
-      }
+    let currentMode = "register"; // 預設為註冊模式
+
+    function selectTab(mode) {
+      currentMode = mode;
+      console.log(`目前模式: ${mode === 'register' ? '註冊' : '登入'}`);
     }
 
     function authenticateWithGoogle() {
       console.log("認證中...");
-      auth.signInWithPopup(provider)
-        .then(result => {
-          console.log("認證成功:", result);
-          const user = result.user;
-          if (currentMode === "register") {
-            saveUserData(user);
-          } else {
-            updateLastLogin(user);
-          }
-          displayUserData(user);
-        });
+      auth.signInWithPopup(provider).then(result => {
+        const user = result.user;
+        if (currentMode === "register") {
+          saveUserData(user);
+          switchToViewMemberMode(user);
+        } else {
+          updateLastLogin(user);
+          displayUserInModal(user);
+        }
+      });
     }
 
     function saveUserData(user) {
@@ -129,25 +134,30 @@
       });
     }
 
-    function formatDate(date) {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      const seconds = String(d.getSeconds()).padStart(2, '0');
-      return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    function switchToViewMemberMode(user) {
+      const actionButton = document.getElementById("actionButton");
+      actionButton.textContent = "查看會員資料";
+      actionButton.onclick = () => displayUserInModal(user);
     }
 
-    function displayUserData(user) {
+    function displayUserInModal(user) {
       database.ref('users/' + user.uid).once('value').then(snapshot => {
         const data = snapshot.val();
-        document.getElementById("userName").innerText = `姓名: ${data.name}`;
-        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
-        document.getElementById("userPhoto").src = data.photoURL;
-        document.getElementById("lastLogin").innerText = `最後登入時間: ${formatDate(data.lastLogin)}`;
+        document.getElementById("modalUserName").innerText = `姓名: ${data.name}`;
+        document.getElementById("modalUserEmail").innerText = `Email: ${data.email}`;
+        document.getElementById("modalUserPhoto").src = data.photoURL;
+        document.getElementById("modalLastLogin").innerText = `最後登入時間: ${formatDate(data.lastLogin)}`;
+        document.getElementById("userModal").style.display = "flex";
       });
+    }
+
+    function closeModal() {
+      document.getElementById("userModal").style.display = "none";
+    }
+
+    function formatDate(date) {
+      const d = new Date(date);
+      return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
     }
   </script>
 </body>
