@@ -1,3 +1,7 @@
+分享
+
+
+你說：
 <!DOCTYPE html>
 <html lang="zh-Hant">
 
@@ -55,7 +59,6 @@
                     <textarea id="noteContent" class="form-control" rows="3" placeholder="輸入筆記內容" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">新增筆記</button>
-                <button type="button" id="cancelEditBtn" class="btn btn-secondary d-none">取消修改</button>
             </form>
 
             <!-- 顯示筆記區 -->
@@ -92,7 +95,6 @@
             const provider = new firebase.auth.GoogleAuthProvider();
 
             let currentUserId = null;
-            let editingNoteId = null;
 
             // 註冊按鈕
             document.getElementById('registerBtn').addEventListener('click', () => {
@@ -171,9 +173,9 @@
             // 顯示用戶資料
             function displayUserData(userData) {
                 document.getElementById('modalUserPhoto').src = userData.photoURL;
-                document.getElementById('modalUserName').textContent = `姓名：${userData.name}`;
-                document.getElementById('modalUserEmail').textContent = `Email：${userData.email}`;
-                document.getElementById('modalLastLogin').textContent = `最後登入時間：${userData.lastLogin}`;
+                document.getElementById('modalUserName').textContent = 姓名：${userData.name};
+                document.getElementById('modalUserEmail').textContent = Email：${userData.email};
+                document.getElementById('modalLastLogin').textContent = 最後登入時間：${userData.lastLogin};
 
                 document.getElementById('showUserInfoBtn').classList.remove('d-none');
                 document.getElementById('logoutBtn').classList.remove('d-none');
@@ -191,133 +193,115 @@
                 document.getElementById('crudSection').classList.add('d-none');
             }
 
-            // 顯示提示訊息
-            function showAlert(type, title, text = "") {
-                Swal.fire({
-                    icon: type,
-                    title: title,
-                    text: text
-                });
-            }
-
             // 新增筆記
-            document.getElementById('noteForm').addEventListener('submit', (event) => {
-                event.preventDefault();
+            document.getElementById('noteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
 
                 const title = document.getElementById('noteTitle').value;
                 const content = document.getElementById('noteContent').value;
 
-                if (editingNoteId) {
-                    updateNote(editingNoteId, title, content);
+                if (title && content) {
+                    const noteData = {
+                        title,
+                        content,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    const noteId = database.ref().child('notes').push().key;
+                    database.ref(notes/${currentUserId}/${noteId}).set(noteData)
+                        .then(() => {
+                            showAlert("success", "筆記新增成功！");
+                            document.getElementById('noteForm').reset();
+                            loadNotes();
+                        })
+                        .catch((error) => {
+                            console.error('新增筆記失敗：', error);
+                            showAlert("error", "無法新增筆記", error.message);
+                        });
                 } else {
-                    createNote(title, content);
+                    showAlert("error", "請輸入完整的筆記資訊！");
                 }
             });
 
-            // 新增筆記函數
-            function createNote(title, content) {
-                const newNoteRef = database.ref('notes').push();
-                newNoteRef.set({
-                    userId: currentUserId,
-                    title: title,
-                    content: content,
-                    timestamp: new Date().toISOString()
-                })
-                .then(() => {
-                    showAlert("success", "筆記已新增！");
-                    loadNotes();
-                    resetForm();
-                })
-                .catch((error) => {
-                    console.error('新增筆記失敗：', error);
+            // 刪除筆記
+            function deleteNote(noteId) {
+                Swal.fire({
+                    title: '確認刪除筆記嗎？',
+                    text: '這個動作無法撤銷。',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '刪除',
+                    cancelButtonText: '取消',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        database.ref(notes/${currentUserId}/${noteId}).remove()
+                            .then(() => {
+                                showAlert("success", "筆記刪除成功！");
+                                loadNotes();
+                            })
+                            .catch((error) => {
+                                console.error('刪除筆記失敗：', error);
+                                showAlert("error", "無法刪除筆記", error.message);
+                            });
+                    }
                 });
             }
 
-            // 更新筆記函數
-            function updateNote(noteId, title, content) {
-                const noteRef = database.ref('notes/' + noteId);
-                noteRef.update({
-                    title: title,
-                    content: content
-                })
-                .then(() => {
-                    showAlert("success", "筆記已更新！");
-                    loadNotes();
-                    resetForm();
-                })
-                .catch((error) => {
-                    console.error('更新筆記失敗：', error);
-                });
-            }
-
-            // 取消編輯並重置表單
-            document.getElementById('cancelEditBtn').addEventListener('click', () => {
-                resetForm();
-            });
-
-            // 重置表單
-            function resetForm() {
-                document.getElementById('noteTitle').value = '';
-                document.getElementById('noteContent').value = '';
-                document.getElementById('cancelEditBtn').classList.add('d-none');
-                editingNoteId = null;
-            }
-
-            // 讀取筆記
+            // 加載筆記
             function loadNotes() {
-                const notesList = document.getElementById('notesList').querySelector('.list-group');
-                notesList.innerHTML = '';
+                if (!currentUserId) {
+                    console.error("用戶未登入，無法加載筆記");
+                    return;
+                }
 
-                database.ref('notes').orderByChild('userId').equalTo(currentUserId).once('value')
+                const notesListElement = document.querySelector('#notesList .list-group');
+                notesListElement.innerHTML = '<p class="text-muted">加載中...</p>';
+
+                database.ref(notes/${currentUserId}).once('value')
                     .then((snapshot) => {
-                        snapshot.forEach((childSnapshot) => {
-                            const note = childSnapshot.val();
-                            const noteId = childSnapshot.key;
+                        if (snapshot.exists()) {
+                            notesListElement.innerHTML = '';
+                            const notes = snapshot.val();
 
-                            const noteItem = document.createElement('div');
-                            noteItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
-                            noteItem.innerHTML = `
-                                <strong>${note.title}</strong>
-                                <button class="btn btn-sm btn-warning" onclick="editNote('${noteId}')">修改</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteNote('${noteId}')">刪除</button>
-                            `;
-                            notesList.appendChild(noteItem);
-                        });
+                            Object.keys(notes).forEach((noteId) => {
+                                const note = notes[noteId];
+                                const noteItem = document.createElement('div');
+                                noteItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                                noteItem.innerHTML = 
+                                    <div>
+                                        <h5 class="mb-1">${note.title}</h5>
+                                        <p class="mb-1">${note.content}</p>
+                                        <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
+                                    </div>
+                                    <button class="btn btn-danger btn-sm delete-btn" data-id="${noteId}">刪除</button>
+                                ;
+                                notesListElement.appendChild(noteItem);
+                            });
+
+                            // 給每個刪除按鈕綁定事件
+                            const deleteButtons = document.querySelectorAll('.delete-btn');
+                            deleteButtons.forEach((button) => {
+                                button.addEventListener('click', (e) => {
+                                    const noteId = e.target.getAttribute('data-id');
+                                    deleteNote(noteId);
+                                });
+                            });
+                        } else {
+                            notesListElement.innerHTML = '<p class="text-muted">目前沒有任何筆記。</p>';
+                        }
                     })
                     .catch((error) => {
                         console.error('讀取筆記失敗：', error);
+                        notesListElement.innerHTML = '<p class="text-danger">無法加載筆記，請稍後再試。</p>';
                     });
             }
 
-            // 編輯筆記
-            window.editNote = function(noteId) {
-                const noteRef = database.ref('notes/' + noteId);
-                noteRef.once('value')
-                    .then((snapshot) => {
-                        const note = snapshot.val();
-                        document.getElementById('noteTitle').value = note.title;
-                        document.getElementById('noteContent').value = note.content;
-                        document.getElementById('cancelEditBtn').classList.remove('d-none');
-                        editingNoteId = noteId;
-                    })
-                    .catch((error) => {
-                        console.error('編輯筆記失敗：', error);
-                    });
-            };
-
-            // 刪除筆記
-            window.deleteNote = function(noteId) {
-                const noteRef = database.ref('notes/' + noteId);
-                noteRef.remove()
-                    .then(() => {
-                        showAlert("success", "筆記已刪除！");
-                        loadNotes();
-                    })
-                    .catch((error) => {
-                        console.error('刪除筆記失敗：', error);
-                    });
-            };
-
+            // 顯示警告
+            function showAlert(type, title, text = '') {
+                const icon = type === "success" ? "success" : "error";
+                Swal.fire({ icon, title, text, timer: 3000, showConfirmButton: false });
+            }
         });
     </script>
 </body>
