@@ -1,190 +1,221 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>認證與會員系統</title>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database-compat.js"></script>
-  <!-- SweetAlert2 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .container {
-      margin-top: 50px;
-    }
-    .tab button {
-      width: 48%;
-      padding: 10px;
-      font-size: 16px;
-    }
-    .card img {
-      border-radius: 50%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase CRUD 示例</title>
+    <!-- 引入 Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
-  <div class="container text-center">
-    <div class="tab mb-4">
-      <button id="register-btn" class="btn btn-primary" onclick="selectTab('register')">註冊</button>
-      <button id="login-btn" class="btn btn-success" onclick="selectTab('login')">登入</button>
-    </div>
-    <div id="member-info" class="d-none">
-      <!-- Member info will be dynamically added here -->
-    </div>
-    <div id="view-profile-section" class="d-none">
-      <!-- View profile button will be here after login -->
-    </div>
-    <div id="logout-section" class="d-none">
-      <!-- Logout button will appear here after login -->
-    </div>
-  </div>
+    <div class="container mt-5">
+        <h1 class="text-center">會員系統</h1>
+        <div class="text-center my-4">
+            <button id="registerBtn" class="btn btn-primary">註冊</button>
+            <button id="loginBtn" class="btn btn-success">登入</button>
+            <button id="showUserInfoBtn" class="btn btn-info d-none">會員信息</button>
+            <button id="logoutBtn" class="btn btn-danger d-none">登出</button>
+        </div>
 
-  <script>
-    // Firebase 初始化
-    const firebaseConfig = {
-      apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
-      authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
-      databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
-      projectId: "sample-firebase-ai-app2-1772f",
-      storageBucket: "sample-firebase-ai-app2-1772f.firebasestorage.app",
-      messagingSenderId: "824252885125",
-      appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const database = firebase.database();
-    const provider = new firebase.auth.GoogleAuthProvider();
-    
-    let currentMode = "register"; // Default mode is register
-
-    function selectTab(mode) {
-      currentMode = mode;
-      console.log(`目前模式: ${mode === 'register' ? '註冊' : '登入'}`);
-      authenticateWithGoogle();
-    }
-
-    function authenticateWithGoogle() {
-      console.log("認證中...");
-      auth.signInWithPopup(provider)
-        .then(result => {
-          console.log("認證成功:", result);
-          const user = result.user;
-          if (currentMode === "register") {
-            saveUserData(user);
-            showSuccessAlert('註冊成功！');
-          } else {
-            updateLastLogin(user);
-            showSuccessAlert('登入成功！');
-          }
-          showViewProfileButton(user);
-        })
-        .catch(error => {
-          showErrorAlert('認證失敗，請再試一次。');
-        });
-    }
-
-    function saveUserData(user) {
-      const userData = {
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        lastLogin: new Date().toISOString()
-      };
-      database.ref('users/' + user.uid).set(userData);
-    }
-
-    function updateLastLogin(user) {
-      database.ref('users/' + user.uid).update({
-        lastLogin: new Date().toISOString()
-      });
-    }
-
-    // Show "查看會員資料" button in the original "註冊" position after successful login
-    function showViewProfileButton(user) {
-      // Hide the "註冊" and "登入" buttons
-      document.getElementById("register-btn").style.display = "none";
-      document.getElementById("login-btn").style.display = "none";
-
-      // Create the "查看會員資料" button and place it in the "註冊" button's location
-      const viewProfileBtn = document.createElement("button");
-      viewProfileBtn.classList.add("btn", "btn-info");
-      viewProfileBtn.innerText = "查看會員資料";
-      viewProfileBtn.onclick = function() {
-        showMemberInfo();
-      };
-
-      // Insert the button where the "註冊" button was
-      const registerBtnSection = document.getElementById("register-btn").parentElement;
-      registerBtnSection.appendChild(viewProfileBtn);
-
-      // Show the "登出" button in place of the "登入" button
-      const logoutBtn = document.createElement("button");
-      logoutBtn.classList.add("btn", "btn-danger");
-      logoutBtn.innerText = "登出";
-      logoutBtn.onclick = logout;
-
-      // Insert the logout button where the "登入" button was
-      const loginBtnSection = document.getElementById("login-btn").parentElement;
-      loginBtnSection.appendChild(logoutBtn);
-    }
-
-    // Show member info when "查看會員資料" button is clicked
-    function showMemberInfo() {
-      const user = auth.currentUser;
-      database.ref('users/' + user.uid).once('value').then(snapshot => {
-        const data = snapshot.val();
-        const memberInfo = document.getElementById("member-info");
-
-        // Show member info in Bootstrap card
-        memberInfo.innerHTML = `
-          <div class="card mx-auto" style="width: 18rem;">
-            <div class="card-body text-center">
-              <img src="${data.photoURL}" alt="User Photo" class="card-img-top mb-3" style="width: 100px; height: 100px;">
-              <h5 class="card-title">${data.name}</h5>
-              <p class="card-text">${data.email}</p>
-              <p class="text-muted">最後登入: ${formatDate(data.lastLogin)}</p>
+        <!-- 用戶資料區 -->
+        <div class="modal fade" id="userInfoModal" tabindex="-1" aria-labelledby="userInfoModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="userInfoModalLabel">會員信息</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalUserPhoto" src="" alt="用戶頭像" class="img-fluid rounded-circle mb-3"
+                            style="width: 100px;">
+                        <h5 id="modalUserName" class="card-title"></h5>
+                        <p id="modalUserEmail" class="card-text"></p>
+                        <p id="modalLastLogin" class="card-text text-muted"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    </div>
+                </div>
             </div>
-          </div>`;
+        </div>
 
-        // Show member info section
-        memberInfo.classList.remove("d-none");
-      });
-    }
+   
 
-    // Format date for better readability
-    function formatDate(date) {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      const seconds = String(d.getSeconds()).padStart(2, '0');
-      return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
-    }
+    <!-- 引入 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    // Show success alert
-    function showSuccessAlert(message) {
-      Swal.fire({
-        icon: 'success',
-        title: message,
-        confirmButtonText: '確定'
-      });
-    }
+    <!-- 引入 Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    // Show error alert
-    function showErrorAlert(message) {
-      Swal.fire({
-        icon: 'error',
-        title: '錯誤',
-        text: message,
-        confirmButtonText: '重新嘗試'
-      });
-    }
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Firebase 配置
+            const firebaseConfig = {
+              apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
+              authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
+              databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
+              projectId: "sample-firebase-ai-app2-1772f",
+              storageBucket: "sample-firebase-ai-app2-1772f.firebasestorage.app",
+              messagingSenderId: "824252885125",
+              appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
+            };
+
+            // 初始化 Firebase
+            firebase.initializeApp(firebaseConfig);
+
+            const auth = firebase.auth();
+            const database = firebase.database();
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            let currentUserId = null;
+
+            // 註冊按鈕
+            document.getElementById('registerBtn').addEventListener('click', () => {
+                auth.signInWithPopup(provider)
+                    .then((result) => {
+                        saveUserData(result.user);
+                        showAlert("success", "註冊成功！");
+                    })
+                    .catch((error) => {
+                        showAlert("error", "註冊失敗", error.message);
+                    });
+            });
+
+
+            // 登入按鈕
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                auth.signInWithPopup(provider)
+                    .then((result) => {
+                        checkIfUserExists(result.user);
+                        showAlert("success", "登入成功！");
+                    })
+                    .catch((error) => {
+                        showAlert("error", "登入失敗", error.message);
+                    });
+            });
+
+
+            // 登出按鈕
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                showConfirm("確定登出？", "", () => {
+                    auth.signOut()
+                        .then(() => {
+                            resetUI();
+                            showAlert("success", "登出成功！");
+                        })
+                        .catch((error) => {
+                            showAlert("error", "登出失敗", error.message);
+                        });
+                });
+            });
+
+            document.getElementById('showUserInfoBtn').addEventListener('click', () => {
+                const userInfoModal = new bootstrap.Modal(document.getElementById('userInfoModal'));
+                userInfoModal.show();
+            });
+
+
+            // 保存用戶數據
+            function saveUserData(user) {
+                const userData = {
+                    name: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    lastLogin: new Date().toISOString()
+                };
+
+                database.ref('users/' + user.uid).set(userData)
+                    .then(() => {
+                        console.log('用戶資料已保存');
+                        displayUserData(userData);
+                        currentUserId = user.uid;
+                        loadNotes();
+                    })
+                    .catch((error) => {
+                        console.error('保存用戶資料失敗：', error);
+                    });
+            }
+
+            // 顯示用戶資料
+            function displayUserData(userData) {
+                // 更新 Modal 内的信息
+                document.getElementById('modalUserPhoto').src = userData.photoURL;
+                document.getElementById('modalUserName').textContent = `姓名：${userData.name}`;
+                document.getElementById('modalUserEmail').textContent = `Email：${userData.email}`;
+                document.getElementById('modalLastLogin').textContent = `最後登入時間：${userData.lastLogin}`;
+
+                // 顯示按鈕區域
+                document.getElementById('showUserInfoBtn').classList.remove('d-none');
+                document.getElementById('logoutBtn').classList.remove('d-none');
+                document.getElementById('registerBtn').classList.add('d-none');
+                document.getElementById('loginBtn').classList.add('d-none');
+
+                // 顯示 CRUD 區域
+                document.getElementById('crudSection').classList.remove('d-none');
+            }
+
+
+            // 重置 UI
+            function resetUI() {
+                document.getElementById('showUserInfoBtn').classList.add('d-none');
+                document.getElementById('logoutBtn').classList.add('d-none');
+                document.getElementById('crudSection').classList.add('d-none');
+
+                // 顯示註冊與登入按鈕
+                document.getElementById('registerBtn').classList.remove('d-none');
+                document.getElementById('loginBtn').classList.remove('d-none');
+            }
+
+            // 檢查用戶是否存在
+            function checkIfUserExists(user) {
+                database.ref('users/' + user.uid).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const userData = snapshot.val();
+                            displayUserData(userData);
+                            currentUserId = user.uid;
+                            loadNotes();
+                        } else {
+                            saveUserData(user);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('檢查用戶失敗：', error);
+                    });
+            }
+
+           
+
+
+            // SweetAlert2 通用彈窗
+            const showAlert = (icon, title, text = "") => {
+                Swal.fire({ icon, title, text });
+            };
+
+            // SweetAlert2 確認彈窗
+            const showConfirm = (title, text, confirmCallback) => {
+                Swal.fire({
+                    title,
+                    text,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "確認",
+                    cancelButtonText: "取消",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        confirmCallback();
+                    }
+                });
+            };
+
+        });
+    </script>
 </body>
+
 </html>
