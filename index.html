@@ -68,7 +68,6 @@
         saveUserData(user);
         switchToViewMemberButton();
         showSuccessAlert("註冊成功", `歡迎, ${user.displayName}`);
-        switchToLogoutButton();
       }).catch(error => {
         showErrorAlert("註冊失敗", error.message);
       });
@@ -81,7 +80,6 @@
         updateLastLogin(user);
         switchToViewMemberButton();
         showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
-        switchToLogoutButton();
       }).catch(error => {
         showErrorAlert("登入失敗", error.message);
       });
@@ -103,10 +101,7 @@
       registerButton.classList.remove("btn-primary");
       registerButton.classList.add("btn-info");
       registerButton.onclick = showUserModal;
-    }
-
-    // 切換按鈕為「登出」
-    function switchToLogoutButton() {
+      
       loginButton.textContent = "登出";
       loginButton.classList.remove("btn-secondary");
       loginButton.classList.add("btn-danger");
@@ -194,6 +189,18 @@
         confirmButtonText: '確定'
       });
     }
+
+    // Firebase 認證狀態監聽
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // 如果已經登入，顯示查看會員資料及登出按鈕
+        switchToViewMemberButton();
+      } else {
+        // 如果未登入，恢復到登入或註冊按鈕
+        resetToInitialButtons();
+      }
+    });
+
   </script>
 </body>
 </html>
