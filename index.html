@@ -61,18 +61,57 @@
     const registerButton = document.getElementById("registerButton");
     const loginButton = document.getElementById("loginButton");
 
+ 
     // 註冊功能
     registerButton.addEventListener("click", () => {
       auth.signInWithPopup(provider).then(result => {
         const user = result.user;
         saveUserData(user);
-        switchToViewMemberButton();
+        switchToViewMemberButton(); // 切換到查看會員資料按鈕
         showSuccessAlert("註冊成功", `歡迎, ${user.displayName}`);
-        switchToLogoutButton();
+        switchToLogoutButton(); // 切換到登出按鈕
       }).catch(error => {
         showErrorAlert("註冊失敗", error.message);
       });
     });
+    
+    // 更新切換按鈕的函數
+    function switchToViewMemberButton() {
+      // 取消註冊按鈕的舊功能
+      registerButton.removeEventListener("click", registerFunction);
+    
+      // 更新按鈕外觀與功能
+      registerButton.textContent = "查看會員資料";
+      registerButton.classList.remove("btn-primary");
+      registerButton.classList.add("btn-info");
+    
+      // 綁定新的查看會員資料功能
+      registerButton.addEventListener("click", showUserModal);
+    }
+    
+    // 查看會員資料的功能
+    function showUserModal() {
+      const user = auth.currentUser;
+    
+      if (!user) {
+        showErrorAlert("錯誤", "無法取得使用者資料，請重新登入！");
+        return;
+      }
+    
+      database.ref('users/' + user.uid).once('value').then(snapshot => {
+        const data = snapshot.val();
+        document.getElementById("userName").innerText = `姓名: ${data.name}`;
+        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
+        document.getElementById("userPhoto").src = data.photoURL;
+        document.getElementById("lastLogin").innerText = `最後登入時間: ${formatDate(data.lastLogin)}`;
+    
+        // 顯示 Bootstrap Modal
+        const userModal = new bootstrap.Modal(document.getElementById("userModal"));
+        userModal.show();
+      }).catch(error => {
+        showErrorAlert("資料獲取失敗", error.message);
+      });
+    }
 
     // 登入功能
     loginButton.addEventListener("click", () => {
