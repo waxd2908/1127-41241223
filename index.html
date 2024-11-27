@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 
+
+    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,8 +192,8 @@
             }
 
             // 新增筆記
-            document.getElementById('noteForm').addEventListener('submit', (event) => {
-                event.preventDefault();
+            document.getElementById('noteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
 
                 const title = document.getElementById('noteTitle').value;
                 const content = document.getElementById('noteContent').value;
