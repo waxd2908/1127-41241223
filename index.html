@@ -42,7 +42,12 @@
             </div>
         </div>
 
-   
+        <!-- CRUD 區域（必要的空白區塊，避免 TypeError） -->
+        <div id="crudSection" class="d-none">
+            <!-- 這裡可以放置 CRUD 相關的功能區域 -->
+            <p class="text-center text-muted">這裡是 CRUD 功能區域，根據需求進一步擴展。</p>
+        </div>
+    </div>
 
     <!-- 引入 Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
@@ -57,13 +62,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Firebase 配置
             const firebaseConfig = {
-              apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
-              authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
-              databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
-              projectId: "sample-firebase-ai-app2-1772f",
-              storageBucket: "sample-firebase-ai-app2-1772f.firebasestorage.app",
-              messagingSenderId: "824252885125",
-              appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
+                apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
+                authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
+                databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
+                projectId: "sample-firebase-ai-app2-1772f",
+                storageBucket: "sample-firebase-ai-app2-1772f.firebasestorage.app",
+                messagingSenderId: "824252885125",
+                appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
             };
 
             // 初始化 Firebase
@@ -87,7 +92,6 @@
                     });
             });
 
-
             // 登入按鈕
             document.getElementById('loginBtn').addEventListener('click', () => {
                 auth.signInWithPopup(provider)
@@ -99,7 +103,6 @@
                         showAlert("error", "登入失敗", error.message);
                     });
             });
-
 
             // 登出按鈕
             document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -115,11 +118,11 @@
                 });
             });
 
+            // 顯示用戶信息
             document.getElementById('showUserInfoBtn').addEventListener('click', () => {
                 const userInfoModal = new bootstrap.Modal(document.getElementById('userInfoModal'));
                 userInfoModal.show();
             });
-
 
             // 保存用戶數據
             function saveUserData(user) {
@@ -132,10 +135,8 @@
 
                 database.ref('users/' + user.uid).set(userData)
                     .then(() => {
-                        console.log('用戶資料已保存');
                         displayUserData(userData);
                         currentUserId = user.uid;
-                        loadNotes();
                     })
                     .catch((error) => {
                         console.error('保存用戶資料失敗：', error);
@@ -144,30 +145,24 @@
 
             // 顯示用戶資料
             function displayUserData(userData) {
-                // 更新 Modal 内的信息
                 document.getElementById('modalUserPhoto').src = userData.photoURL;
                 document.getElementById('modalUserName').textContent = `姓名：${userData.name}`;
                 document.getElementById('modalUserEmail').textContent = `Email：${userData.email}`;
                 document.getElementById('modalLastLogin').textContent = `最後登入時間：${userData.lastLogin}`;
 
-                // 顯示按鈕區域
                 document.getElementById('showUserInfoBtn').classList.remove('d-none');
                 document.getElementById('logoutBtn').classList.remove('d-none');
                 document.getElementById('registerBtn').classList.add('d-none');
                 document.getElementById('loginBtn').classList.add('d-none');
 
-                // 顯示 CRUD 區域
                 document.getElementById('crudSection').classList.remove('d-none');
             }
-
 
             // 重置 UI
             function resetUI() {
                 document.getElementById('showUserInfoBtn').classList.add('d-none');
                 document.getElementById('logoutBtn').classList.add('d-none');
                 document.getElementById('crudSection').classList.add('d-none');
-
-                // 顯示註冊與登入按鈕
                 document.getElementById('registerBtn').classList.remove('d-none');
                 document.getElementById('loginBtn').classList.remove('d-none');
             }
@@ -180,7 +175,6 @@
                             const userData = snapshot.val();
                             displayUserData(userData);
                             currentUserId = user.uid;
-                            loadNotes();
                         } else {
                             saveUserData(user);
                         }
@@ -189,9 +183,6 @@
                         console.error('檢查用戶失敗：', error);
                     });
             }
-
-           
-
 
             // SweetAlert2 通用彈窗
             const showAlert = (icon, title, text = "") => {
@@ -213,7 +204,6 @@
                     }
                 });
             };
-
         });
     </script>
 </body>
