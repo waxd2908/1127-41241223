@@ -79,13 +79,15 @@ function switchToRegisterButton() {
   registerButton.addEventListener("click", registerFunction);
 }
 
+
 function switchToViewMemberButton() {
   registerButton.textContent = "查看會員資料";
-  registerButton.classList.remove("btn-primary");
-  registerButton.classList.add("btn-info");
-  registerButton.removeEventListener("click", registerFunction);
-  registerButton.addEventListener("click", viewMemberFunction);
+  registerButton.classList.remove("btn-primary"); // 移除原先的樣式
+  registerButton.classList.add("btn-info"); // 添加新的樣式
+  registerButton.removeEventListener("click", registerFunction); // 確保解除註冊事件
+  registerButton.addEventListener("click", viewMemberFunction); // 綁定查看會員資料事件
 }
+
 
 function switchToLogoutButton() {
   loginButton.textContent = "登出";
