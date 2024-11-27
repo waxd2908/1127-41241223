@@ -100,12 +100,12 @@
       registerButton.textContent = "查看會員資料";
       registerButton.classList.remove("btn-primary");
       registerButton.classList.add("btn-info");
-      registerButton.onclick = showUserModal;
-      
+      registerButton.onclick = showUserModal;  // 這裡將事件改為顯示會員資料
+
       loginButton.textContent = "登出";
       loginButton.classList.remove("btn-secondary");
       loginButton.classList.add("btn-danger");
-      loginButton.onclick = logout;
+      loginButton.onclick = logout;  // 這裡將事件改為登出
     }
 
     // 重置按鈕為初始狀態
@@ -193,14 +193,11 @@
     // Firebase 認證狀態監聽
     auth.onAuthStateChanged(user => {
       if (user) {
-        // 如果已經登入，顯示查看會員資料及登出按鈕
         switchToViewMemberButton();
       } else {
-        // 如果未登入，恢復到登入或註冊按鈕
         resetToInitialButtons();
       }
     });
-
   </script>
 </body>
 </html>
