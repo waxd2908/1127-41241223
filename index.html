@@ -51,9 +51,6 @@
       <button id="register-btn" onclick="selectTab('register')">註冊</button>
       <button id="login-btn" onclick="selectTab('login')">登入</button>
     </div>
-    <div id="auth-section" class="auth-section">
-      <button onclick="authenticateWithGoogle()">認證</button>
-    </div>
     <div id="user-info">
       <p id="userName">姓名: </p>
       <p id="userEmail">Email: </p>
@@ -85,6 +82,7 @@
     function selectTab(mode) {
       currentMode = mode;
       console.log(`目前模式: ${mode === 'register' ? '註冊' : '登入'}`);
+      authenticateWithGoogle();
     }
 
     function authenticateWithGoogle() {
@@ -134,7 +132,6 @@
       // Hide register/login buttons and show user info
       document.getElementById("register-btn").style.display = "none";
       document.getElementById("login-btn").style.display = "none";
-      document.getElementById("auth-section").style.display = "none";
 
       database.ref('users/' + user.uid).once('value').then(snapshot => {
         const data = snapshot.val();
@@ -155,7 +152,6 @@
         // Show the login/register buttons again and hide user info
         document.getElementById("register-btn").style.display = "block";
         document.getElementById("login-btn").style.display = "block";
-        document.getElementById("auth-section").style.display = "flex";
         document.getElementById("user-info").style.display = "none";
       }).catch((error) => {
         console.error("登出失敗:", error);
