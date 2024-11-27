@@ -75,7 +75,7 @@ function switchToRegisterButton() {
   registerButton.textContent = "註冊";
   registerButton.classList.remove("btn-info");
   registerButton.classList.add("btn-primary");
-  registerButton.removeEventListener("click", viewMemberFunction);
+  clearButtonEvents(registerButton); // 清除按鈕的所有事件監聽器
   registerButton.addEventListener("click", registerFunction);
 }
 
@@ -83,7 +83,7 @@ function switchToViewMemberButton() {
   registerButton.textContent = "查看會員資料";
   registerButton.classList.remove("btn-primary");
   registerButton.classList.add("btn-info");
-  registerButton.removeEventListener("click", registerFunction);
+  clearButtonEvents(registerButton); // 清除按鈕的所有事件監聽器
   registerButton.addEventListener("click", viewMemberFunction);
 }
 
@@ -91,7 +91,7 @@ function switchToLogoutButton() {
   loginButton.textContent = "登出";
   loginButton.classList.remove("btn-success");
   loginButton.classList.add("btn-danger");
-  loginButton.removeEventListener("click", loginFunction);
+  clearButtonEvents(loginButton); // 清除按鈕的所有事件監聽器
   loginButton.addEventListener("click", logoutFunction);
 }
 
@@ -99,8 +99,15 @@ function switchToLoginButton() {
   loginButton.textContent = "登入";
   loginButton.classList.remove("btn-danger");
   loginButton.classList.add("btn-success");
-  loginButton.removeEventListener("click", logoutFunction);
+  clearButtonEvents(loginButton); // 清除按鈕的所有事件監聽器
   loginButton.addEventListener("click", loginFunction);
+}
+
+// 清除按鈕的所有事件監聽器
+function clearButtonEvents(button) {
+  const newButton = button.cloneNode(true);
+  button.replaceWith(newButton);
+  return newButton;
 }
 
 // 儲存使用者資料
