@@ -97,28 +97,36 @@
 
     // 切換按鈕為「查看會員資料」
     function switchToViewMemberButton() {
+      // 更改按鈕為查看會員資料
       registerButton.textContent = "查看會員資料";
       registerButton.classList.remove("btn-primary");
       registerButton.classList.add("btn-info");
-      registerButton.onclick = showUserModal;
-      
+      registerButton.removeEventListener('click', registerButtonClick); // 移除註冊的事件
+      registerButton.addEventListener("click", showUserModal);  // 顯示會員資料
+
+      // 切換登入按鈕為登出
       loginButton.textContent = "登出";
       loginButton.classList.remove("btn-secondary");
       loginButton.classList.add("btn-danger");
-      loginButton.onclick = logout;
+      loginButton.removeEventListener('click', loginButtonClick); // 移除登入的事件
+      loginButton.addEventListener("click", logout);  // 登出
     }
 
     // 重置按鈕為初始狀態
     function resetToInitialButtons() {
+      // 註冊按鈕回到原狀態
       registerButton.textContent = "註冊";
       registerButton.classList.remove("btn-info");
       registerButton.classList.add("btn-primary");
-      registerButton.onclick = () => auth.signInWithPopup(provider);
+      registerButton.removeEventListener('click', showUserModal);
+      registerButton.addEventListener("click", registerButtonClick);
 
+      // 登入按鈕回到原狀態
       loginButton.textContent = "登入";
       loginButton.classList.remove("btn-danger");
       loginButton.classList.add("btn-secondary");
-      loginButton.onclick = () => auth.signInWithPopup(provider);
+      loginButton.removeEventListener('click', logout);
+      loginButton.addEventListener("click", loginButtonClick);
     }
 
     // 顯示會員資料模組
@@ -170,7 +178,7 @@
       return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
 
-    // SweetAlert2 成功提示
+    // SweetAlert2 提示
     function showSuccessAlert(title, text) {
       Swal.fire({
         icon: 'success',
@@ -180,7 +188,6 @@
       });
     }
 
-    // SweetAlert2 錯誤提示
     function showErrorAlert(title, text) {
       Swal.fire({
         icon: 'error',
@@ -190,14 +197,12 @@
       });
     }
 
-    // Firebase 認證狀態監聽
+    // 監聽 Firebase 認證狀態變化
     auth.onAuthStateChanged(user => {
       if (user) {
-        // 如果已經登入，顯示查看會員資料及登出按鈕
-        switchToViewMemberButton();
+        switchToViewMemberButton(); // 登入後顯示「查看會員資料」及登出按鈕
       } else {
-        // 如果未登入，恢復到登入或註冊按鈕
-        resetToInitialButtons();
+        resetToInitialButtons(); // 未登入時顯示「註冊」和「登入」按鈕
       }
     });
 
