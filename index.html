@@ -218,7 +218,7 @@
                 }
             });
 
-            // 刪除筆記
+            // 刪除筆記函數
             function deleteNote(noteId) {
                 Swal.fire({
                     title: '確認刪除筆記嗎？',
@@ -230,35 +230,38 @@
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // 確認刪除後，執行 Firebase 刪除操作
+                        console.log(`正在刪除筆記：${noteId}`);  // 新增此行來檢查是否進入該函數
                         database.ref(`notes/${currentUserId}/${noteId}`).remove()
                             .then(() => {
+                                console.log('筆記刪除成功！');
                                 showAlert("success", "筆記刪除成功！");
-                                loadNotes();
+                                loadNotes();  // 重新加載筆記列表
                             })
                             .catch((error) => {
-                                console.error('刪除筆記失敗：', error);
+                                console.error('刪除筆記失敗：', error);  // 顯示具體錯誤
                                 showAlert("error", "無法刪除筆記", error.message);
                             });
                     }
                 });
             }
-
-            // 加載筆記
+            
+            // 加載筆記函數
             function loadNotes() {
                 if (!currentUserId) {
                     console.error("用戶未登入，無法加載筆記");
                     return;
                 }
-
+            
                 const notesListElement = document.querySelector('#notesList .list-group');
                 notesListElement.innerHTML = '<p class="text-muted">加載中...</p>';
-
+            
                 database.ref(`notes/${currentUserId}`).once('value')
                     .then((snapshot) => {
                         if (snapshot.exists()) {
                             notesListElement.innerHTML = '';
                             const notes = snapshot.val();
-
+            
                             Object.keys(notes).forEach((noteId) => {
                                 const note = notes[noteId];
                                 const noteItem = document.createElement('div');
@@ -282,6 +285,7 @@
                         notesListElement.innerHTML = '<p class="text-danger">無法加載筆記，請稍後再試。</p>';
                     });
             }
+
 
             // 顯示警告
             function showAlert(type, title, text = '') {
