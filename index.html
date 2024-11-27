@@ -58,39 +58,72 @@
     const database = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
+    const registerButton = document.getElementById("registerButton");
+    const loginButton = document.getElementById("loginButton");
+
     // 註冊功能
-    document.getElementById("registerButton").addEventListener("click", () => {
+    registerButton.addEventListener("click", () => {
       auth.signInWithPopup(provider).then(result => {
         const user = result.user;
         saveUserData(user);
         switchToViewMemberButton();
         showSuccessAlert("註冊成功", `歡迎, ${user.displayName}`);
+        switchToLogoutButton();
       }).catch(error => {
-        console.error("註冊失敗", error);
-        showErrorAlert("註冊失敗", "請稍後再試！");
+        showErrorAlert("註冊失敗", error.message);
       });
     });
 
     // 登入功能
-    document.getElementById("loginButton").addEventListener("click", () => {
+    loginButton.addEventListener("click", () => {
       auth.signInWithPopup(provider).then(result => {
         const user = result.user;
         updateLastLogin(user);
         switchToViewMemberButton();
         showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
+        switchToLogoutButton();
       }).catch(error => {
-        console.error("登入失敗", error);
-        showErrorAlert("登入失敗", "請稍後再試！");
+        showErrorAlert("登入失敗", error.message);
       });
     });
 
-    // 替換「註冊」按鈕為「查看會員資料」
+    // 登出功能
+    function logout() {
+      auth.signOut().then(() => {
+        resetToInitialButtons();
+        showSuccessAlert("登出成功", "您已成功登出！");
+      }).catch(error => {
+        showErrorAlert("登出失敗", error.message);
+      });
+    }
+
+    // 切換按鈕為「查看會員資料」
     function switchToViewMemberButton() {
-      const registerButton = document.getElementById("registerButton");
       registerButton.textContent = "查看會員資料";
       registerButton.classList.remove("btn-primary");
       registerButton.classList.add("btn-info");
       registerButton.onclick = showUserModal;
+    }
+
+    // 切換按鈕為「登出」
+    function switchToLogoutButton() {
+      loginButton.textContent = "登出";
+      loginButton.classList.remove("btn-secondary");
+      loginButton.classList.add("btn-danger");
+      loginButton.onclick = logout;
+    }
+
+    // 重置按鈕為初始狀態
+    function resetToInitialButtons() {
+      registerButton.textContent = "註冊";
+      registerButton.classList.remove("btn-info");
+      registerButton.classList.add("btn-primary");
+      registerButton.onclick = () => auth.signInWithPopup(provider);
+
+      loginButton.textContent = "登入";
+      loginButton.classList.remove("btn-danger");
+      loginButton.classList.add("btn-secondary");
+      loginButton.onclick = () => auth.signInWithPopup(provider);
     }
 
     // 顯示會員資料模組
@@ -142,7 +175,7 @@
       return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
 
-    // 顯示成功訊息 (SweetAlert2)
+    // SweetAlert2 成功提示
     function showSuccessAlert(title, text) {
       Swal.fire({
         icon: 'success',
@@ -152,7 +185,7 @@
       });
     }
 
-    // 顯示錯誤訊息 (SweetAlert2)
+    // SweetAlert2 錯誤提示
     function showErrorAlert(title, text) {
       Swal.fire({
         icon: 'error',
