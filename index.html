@@ -48,10 +48,10 @@
 <body>
   <div class="container">
     <div class="tab">
-      <button onclick="selectTab('register')">註冊</button>
-      <button onclick="selectTab('login')">登入</button>
+      <button id="register-btn" onclick="selectTab('register')">註冊</button>
+      <button id="login-btn" onclick="selectTab('login')">登入</button>
     </div>
-    <div class="auth-section">
+    <div id="auth-section" class="auth-section">
       <button onclick="authenticateWithGoogle()">認證</button>
     </div>
     <div id="user-info">
@@ -59,6 +59,7 @@
       <p id="userEmail">Email: </p>
       <img id="userPhoto" alt="User Photo" width="100" />
       <p id="lastLogin">最後登入時間: </p>
+      <button onclick="logout()">登出</button>
     </div>
   </div>
 
@@ -98,7 +99,6 @@
             updateLastLogin(user);
           }
           displayUserData(user);
-          updateUIAfterAuth();
         })
     }
 
@@ -131,6 +131,11 @@
     }
 
     function displayUserData(user) {
+      // Hide register/login buttons and show user info
+      document.getElementById("register-btn").style.display = "none";
+      document.getElementById("login-btn").style.display = "none";
+      document.getElementById("auth-section").style.display = "none";
+
       database.ref('users/' + user.uid).once('value').then(snapshot => {
         const data = snapshot.val();
         document.getElementById("userName").innerText = `姓名: ${data.name}`;
@@ -145,33 +150,15 @@
       });
     }
 
-    function updateUIAfterAuth() {
-      // 刪除認證按鈕
-      document.querySelector('.auth-section button').style.display = 'none';
-      
-      // 替換原本的「註冊」和「登入」按鈕
-      const tab = document.querySelector('.tab');
-      tab.innerHTML = `
-        <button onclick="viewUserProfile()">會員資料</button>
-        <button onclick="logout()">登出</button>
-      `;
-    }
-
-    function viewUserProfile() {
-      // 可以在這裡顯示會員資料頁面或在當前頁面展示更多資訊
-      alert("會員資料");
-    }
-
     function logout() {
       auth.signOut().then(() => {
-        console.log("登出成功");
-        // 登出後恢復原始介面
-        document.querySelector('.auth-section button').style.display = 'block';
-        document.querySelector('.tab').innerHTML = `
-          <button onclick="selectTab('register')">註冊</button>
-          <button onclick="selectTab('login')">登入</button>
-        `;
-        document.getElementById("user-info").style.display = 'none';
+        // Show the login/register buttons again and hide user info
+        document.getElementById("register-btn").style.display = "block";
+        document.getElementById("login-btn").style.display = "block";
+        document.getElementById("auth-section").style.display = "flex";
+        document.getElementById("user-info").style.display = "none";
+      }).catch((error) => {
+        console.error("登出失敗:", error);
       });
     }
   </script>
