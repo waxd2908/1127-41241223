@@ -43,11 +43,28 @@
         </div>
 
         <!-- CRUD 區域（必要的空白區塊，避免 TypeError） -->
-        <div id="crudSection" class="d-none">
-            <!-- 這裡可以放置 CRUD 相關的功能區域 -->
-            <p class="text-center text-muted">這裡是 CRUD 功能區域，根據需求進一步擴展。</p>
+        <!-- CRUD 區域 -->
+    <div id="crudSection" class="d-none mt-5">
+        <h3 class="text-center">筆記管理</h3>
+        <form id="noteForm" class="mb-4">
+            <div class="mb-3">
+                <label for="noteTitle" class="form-label">標題</label>
+                <input type="text" id="noteTitle" class="form-control" placeholder="輸入筆記標題" required>
+            </div>
+            <div class="mb-3">
+                <label for="noteContent" class="form-label">內容</label>
+                <textarea id="noteContent" class="form-control" rows="3" placeholder="輸入筆記內容" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">新增筆記</button>
+        </form>
+    
+        <!-- 顯示筆記區 -->
+        <div id="notesList" class="mt-4">
+            <h4>你的筆記</h4>
+            <div class="list-group"></div>
         </div>
     </div>
+
 
     <!-- 引入 Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
@@ -182,6 +199,86 @@
                     .catch((error) => {
                         console.error('檢查用戶失敗：', error);
                     });
+            }
+            // 在 DOMContentLoaded 內部新增這些函數和事件處理
+
+            // 新增筆記表單提交處理
+            document.getElementById('noteForm').addEventListener('submit', (event) => {
+                event.preventDefault(); // 防止表單提交刷新頁面
+                const title = document.getElementById('noteTitle').value.trim();
+                const content = document.getElementById('noteContent').value.trim();
+            
+                if (title && content && currentUserId) {
+                    const noteId = database.ref(`notes/${currentUserId}`).push().key; // 生成唯一筆記 ID
+                    const noteData = {
+                        title,
+                        content,
+                        timestamp: new Date().toISOString()
+                    };
+            
+                    // 保存到 Firebase
+                    database.ref(`notes/${currentUserId}/${noteId}`).set(noteData)
+                        .then(() => {
+                            showAlert("success", "筆記新增成功！");
+                            document.getElementById('noteForm').reset(); // 清空表單
+                            loadNotes(); // 重新加載筆記
+                        })
+                        .catch((error) => {
+                            console.error('新增筆記失敗：', error);
+                            showAlert("error", "無法新增筆記", error.message);
+                        });
+                } else {
+                    showAlert("error", "標題和內容不可為空！");
+                }
+            });
+            
+            // 加載筆記
+            function loadNotes() {
+                if (!currentUserId) return;
+            
+                const notesListElement = document.querySelector('#notesList .list-group');
+                notesListElement.innerHTML = ''; // 清空現有筆記
+            
+                database.ref(`notes/${currentUserId}`).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const notes = snapshot.val();
+                            Object.keys(notes).forEach((noteId) => {
+                                const note = notes[noteId];
+                                const noteItem = document.createElement('div');
+                                noteItem.className = 'list-group-item';
+                                noteItem.innerHTML = `
+                                    <h5 class="mb-1">${note.title}</h5>
+                                    <p class="mb-1">${note.content}</p>
+                                    <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
+                                    <button class="btn btn-danger btn-sm mt-2" onclick="deleteNote('${noteId}')">刪除</button>
+                                `;
+                                notesListElement.appendChild(noteItem);
+                            });
+                        } else {
+                            notesListElement.innerHTML = '<p class="text-muted">目前沒有任何筆記。</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('加載筆記失敗：', error);
+                    });
+            }
+            
+            // 刪除筆記
+            function deleteNote(noteId) {
+                if (!currentUserId || !noteId) return;
+            
+                showConfirm("確認刪除？", "這將永久刪除此筆記。", () => {
+                    database.ref(`notes/${currentUserId}/${noteId}`).remove()
+                        .then(() => {
+                            showAlert("success", "筆記刪除成功！");
+                            loadNotes(); // 重新加載筆記
+                        })
+                        .catch((error) => {
+                            console.error('刪除筆記失敗：', error);
+                            showAlert("error", "無法刪除筆記", error.message);
+                        });
+                });
             }
 
             // SweetAlert2 通用彈窗
