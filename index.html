@@ -220,15 +220,27 @@
 
             // 刪除筆記
             function deleteNote(noteId) {
-                database.ref(`notes/${currentUserId}/${noteId}`).remove()
-                    .then(() => {
-                        showAlert("success", "筆記刪除成功！");
-                        loadNotes();
-                    })
-                    .catch((error) => {
-                        console.error('刪除筆記失敗：', error);
-                        showAlert("error", "無法刪除筆記", error.message);
-                    });
+                Swal.fire({
+                    title: '確認刪除筆記嗎？',
+                    text: '這個動作無法撤銷。',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '刪除',
+                    cancelButtonText: '取消',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        database.ref(`notes/${currentUserId}/${noteId}`).remove()
+                            .then(() => {
+                                showAlert("success", "筆記刪除成功！");
+                                loadNotes();
+                            })
+                            .catch((error) => {
+                                console.error('刪除筆記失敗：', error);
+                                showAlert("error", "無法刪除筆記", error.message);
+                            });
+                    }
+                });
             }
 
             // 加載筆記
