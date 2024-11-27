@@ -4,48 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase CRUD 筆記系統</title>
-    <!-- 引入 Bootstrap 5.3 -->
+    <title>Firebase 筆記系統</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">會員系統與筆記管理</h1>
-        <div class="text-center my-4">
+        <h1 class="text-center">筆記管理系統</h1>
+        <div class="mt-4">
             <button id="registerBtn" class="btn btn-primary">註冊</button>
             <button id="loginBtn" class="btn btn-success">登入</button>
-            <button id="showUserInfoBtn" class="btn btn-info d-none">會員信息</button>
             <button id="logoutBtn" class="btn btn-danger d-none">登出</button>
         </div>
 
-        <!-- 用戶資料區 -->
-        <div class="modal fade" id="userInfoModal" tabindex="-1" aria-labelledby="userInfoModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="userInfoModalLabel">會員信息</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <img id="modalUserPhoto" src="" alt="用戶頭像" class="img-fluid rounded-circle mb-3"
-                            style="width: 100px;">
-                        <h5 id="modalUserName" class="card-title"></h5>
-                        <p id="modalUserEmail" class="card-text"></p>
-                        <p id="modalLastLogin" class="card-text text-muted"></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 筆記管理區 -->
+        <!-- 筆記管理 -->
         <div id="crudSection" class="d-none mt-5">
             <h3 class="text-center">筆記管理</h3>
-            <form id="noteForm" class="mb-4">
+            <form id="noteForm">
                 <div class="mb-3">
                     <label for="noteTitle" class="form-label">標題</label>
                     <input type="text" id="noteTitle" class="form-control" placeholder="輸入筆記標題" required>
@@ -54,10 +29,10 @@
                     <label for="noteContent" class="form-label">內容</label>
                     <textarea id="noteContent" class="form-control" rows="3" placeholder="輸入筆記內容" required></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">新增筆記</button>
+                <input type="hidden" id="editingNoteId">
+                <button type="submit" class="btn btn-primary">保存筆記</button>
             </form>
 
-            <!-- 顯示筆記區 -->
             <div id="notesList" class="mt-4">
                 <h4>你的筆記</h4>
                 <div class="list-group"></div>
@@ -65,34 +40,30 @@
         </div>
     </div>
 
-    <!-- 引入 Firebase SDK -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
-                apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
-                authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
-                databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
-                projectId: "sample-firebase-ai-app2-1772f",
-                storageBucket: "sample-firebase-ai-app2-1772f.appspot.com",
-                messagingSenderId: "824252885125",
-                appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
+                apiKey: "YOUR_API_KEY",
+                authDomain: "YOUR_AUTH_DOMAIN",
+                databaseURL: "YOUR_DATABASE_URL",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_STORAGE_BUCKET",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID"
             };
 
             firebase.initializeApp(firebaseConfig);
-
             const auth = firebase.auth();
             const database = firebase.database();
             const provider = new firebase.auth.GoogleAuthProvider();
-
             let currentUserId = null;
 
-            // 註冊按鈕
+            // 註冊
             document.getElementById('registerBtn').addEventListener('click', () => {
                 auth.signInWithPopup(provider)
                     .then((result) => {
@@ -104,23 +75,26 @@
                     });
             });
 
-            // 登入按鈕
+            // 登入
             document.getElementById('loginBtn').addEventListener('click', () => {
                 auth.signInWithPopup(provider)
                     .then((result) => {
-                        checkIfUserExists(result.user);
+                        currentUserId = result.user.uid;
                         showAlert("success", "登入成功！");
+                        document.getElementById('crudSection').classList.remove('d-none');
+                        loadNotes();
                     })
                     .catch((error) => {
                         showAlert("error", "登入失敗", error.message);
                     });
             });
 
-            // 登出按鈕
+            // 登出
             document.getElementById('logoutBtn').addEventListener('click', () => {
                 auth.signOut()
                     .then(() => {
-                        resetUI();
+                        currentUserId = null;
+                        document.getElementById('crudSection').classList.add('d-none');
                         showAlert("success", "登出成功！");
                     })
                     .catch((error) => {
@@ -128,147 +102,119 @@
                     });
             });
 
-            // 儲存用戶資料
-            function saveUserData(user) {
-                const userData = {
-                    name: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    lastLogin: new Date().toISOString()
-                };
+            // 保存筆記
+            document.getElementById('noteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const noteTitle = document.getElementById('noteTitle').value.trim();
+                const noteContent = document.getElementById('noteContent').value.trim();
+                const editingNoteId = document.getElementById('editingNoteId').value;
 
-                database.ref('users/' + user.uid).set(userData)
-                    .then(() => {
-                        currentUserId = user.uid;
-                        displayUserData(userData);
-                        loadNotes();
-                    })
-                    .catch((error) => {
-                        console.error('保存用戶資料失敗：', error);
-                    });
-            }
-
-            // 檢查用戶是否存在
-            function checkIfUserExists(user) {
-                database.ref('users/' + user.uid).once('value')
-                    .then((snapshot) => {
-                        if (snapshot.exists()) {
-                            const userData = snapshot.val();
-                            displayUserData(userData);
-                            currentUserId = user.uid;
-                            loadNotes();
-                        } else {
-                            saveUserData(user);
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('檢查用戶失敗：', error);
-                    });
-            }
-
-            // 顯示用戶資料
-            function displayUserData(userData) {
-                document.getElementById('modalUserPhoto').src = userData.photoURL;
-                document.getElementById('modalUserName').textContent = `姓名：${userData.name}`;
-                document.getElementById('modalUserEmail').textContent = `Email：${userData.email}`;
-                document.getElementById('modalLastLogin').textContent = `最後登入時間：${userData.lastLogin}`;
-
-                document.getElementById('showUserInfoBtn').classList.remove('d-none');
-                document.getElementById('logoutBtn').classList.remove('d-none');
-                document.getElementById('registerBtn').classList.add('d-none');
-                document.getElementById('loginBtn').classList.add('d-none');
-                document.getElementById('crudSection').classList.remove('d-none');
-            }
-
-            // 重置 UI
-            function resetUI() {
-                document.getElementById('showUserInfoBtn').classList.add('d-none');
-                document.getElementById('logoutBtn').classList.add('d-none');
-                document.getElementById('registerBtn').classList.remove('d-none');
-                document.getElementById('loginBtn').classList.remove('d-none');
-                document.getElementById('crudSection').classList.add('d-none');
-            }
-
-            // 新增筆記
-            document.getElementById('noteForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                const title = document.getElementById('noteTitle').value.trim();
-                const content = document.getElementById('noteContent').value.trim();
-
-                if (title && content && currentUserId) {
-                    const noteId = database.ref(`notes/${currentUserId}`).push().key;
-                    const noteData = { title, content, timestamp: new Date().toISOString() };
-
-                    database.ref(`notes/${currentUserId}/${noteId}`).set(noteData)
-                        .then(() => {
-                            showAlert("success", "筆記新增成功！");
-                            document.getElementById('noteForm').reset();
-                            loadNotes();
-                        })
-                        .catch((error) => {
-                            console.error('新增筆記失敗：', error);
-                            showAlert("error", "無法新增筆記", error.message);
-                        });
+                if (noteTitle && noteContent) {
+                    if (editingNoteId) {
+                        updateNote(editingNoteId, { title: noteTitle, content: noteContent });
+                    } else {
+                        addNewNote({ title: noteTitle, content: noteContent });
+                    }
                 } else {
-                    showAlert("error", "請輸入完整的筆記資訊！");
+                    showAlert("error", "請完整填寫表單！");
                 }
             });
 
+            // 加載筆記
+            function loadNotes() {
+                database.ref(`notes/${currentUserId}`).once('value')
+                    .then((snapshot) => {
+                        const notesList = document.querySelector('#notesList .list-group');
+                        notesList.innerHTML = '';
+                        if (snapshot.exists()) {
+                            const notes = snapshot.val();
+                            Object.keys(notes).forEach(noteId => {
+                                const note = notes[noteId];
+                                const noteItem = document.createElement('div');
+                                noteItem.className = 'list-group-item';
+                                noteItem.innerHTML = `
+                                    <h5>${note.title}</h5>
+                                    <p>${note.content}</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-warning btn-sm me-2" onclick="editNote('${noteId}')">修改</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteNote('${noteId}')">刪除</button>
+                                    </div>
+                                `;
+                                notesList.appendChild(noteItem);
+                            });
+                        } else {
+                            notesList.innerHTML = '<p class="text-muted">尚無筆記</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('無法加載筆記：', error);
+                    });
+            }
+
+            // 新增筆記
+            function addNewNote(note) {
+                const newNoteId = database.ref(`notes/${currentUserId}`).push().key;
+                database.ref(`notes/${currentUserId}/${newNoteId}`).set({
+                    ...note,
+                    timestamp: new Date().toISOString()
+                })
+                    .then(() => {
+                        showAlert("success", "筆記新增成功！");
+                        document.getElementById('noteForm').reset();
+                        loadNotes();
+                    })
+                    .catch(error => {
+                        console.error('無法新增筆記：', error);
+                    });
+            }
+
+            // 修改筆記
+            function updateNote(noteId, note) {
+                database.ref(`notes/${currentUserId}/${noteId}`).update(note)
+                    .then(() => {
+                        showAlert("success", "筆記修改成功！");
+                        document.getElementById('noteForm').reset();
+                        document.getElementById('editingNoteId').value = '';
+                        loadNotes();
+                    })
+                    .catch(error => {
+                        console.error('無法修改筆記：', error);
+                    });
+            }
+
+            // 編輯筆記
+            window.editNote = function (noteId) {
+                database.ref(`notes/${currentUserId}/${noteId}`).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const note = snapshot.val();
+                            document.getElementById('noteTitle').value = note.title;
+                            document.getElementById('noteContent').value = note.content;
+                            document.getElementById('editingNoteId').value = noteId;
+                        } else {
+                            showAlert("error", "筆記不存在！");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('無法讀取筆記：', error);
+                    });
+            };
+
             // 刪除筆記
-            function deleteNote(noteId) {
+            window.deleteNote = function (noteId) {
                 database.ref(`notes/${currentUserId}/${noteId}`).remove()
                     .then(() => {
                         showAlert("success", "筆記刪除成功！");
                         loadNotes();
                     })
-                    .catch((error) => {
-                        console.error('刪除筆記失敗：', error);
-                        showAlert("error", "無法刪除筆記", error.message);
+                    .catch(error => {
+                        console.error('無法刪除筆記：', error);
                     });
-            }
+            };
 
-            // 加載筆記
-            function loadNotes() {
-                if (!currentUserId) {
-                    console.error("用戶未登入，無法加載筆記");
-                    return;
-                }
-
-                const notesListElement = document.querySelector('#notesList .list-group');
-                notesListElement.innerHTML = '<p class="text-muted">加載中...</p>';
-
-                database.ref(`notes/${currentUserId}`).once('value')
-                    .then((snapshot) => {
-                        if (snapshot.exists()) {
-                            notesListElement.innerHTML = '';
-                            const notes = snapshot.val();
-
-                            Object.keys(notes).forEach((noteId) => {
-                                const note = notes[noteId];
-                                const noteItem = document.createElement('div');
-                                noteItem.className = 'list-group-item';
-                                noteItem.innerHTML = `
-                                    <h5 class="mb-1">${note.title}</h5>
-                                    <p class="mb-1">${note.content}</p>
-                                    <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
-                                    <button class="btn btn-danger btn-sm mt-2" onclick="deleteNote('${noteId}')">刪除</button>
-                                `;
-                                notesListElement.appendChild(noteItem);
-                            });
-                        } else {
-                            notesListElement.innerHTML = '<p class="text-muted">目前沒有任何筆記。</p>';
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('讀取筆記失敗：', error);
-                        notesListElement.innerHTML = '<p class="text-danger">無法加載筆記，請稍後再試。</p>';
-                    });
-            }
-
-            // 顯示警告
-            function showAlert(type, title, text = '') {
-                const icon = type === "success" ? "success" : "error";
-                Swal.fire({ icon, title, text, timer: 3000, showConfirmButton: false });
+            // 警告提示
+            function showAlert(type, message) {
+                Swal.fire({ icon: type, title: message, timer: 3000, showConfirmButton: false });
             }
         });
     </script>
