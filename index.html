@@ -3,41 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>會員系統</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>認證與會員系統</title>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database-compat.js"></script>
+  <style>
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      margin-top: 50px;
+    }
+    .tab {
+      display: flex;
+      width: 200px;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .tab button {
+      width: 48%;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .auth-section {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .auth-section button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #user-info {
+      text-align: center;
+      display: none;
+    }
+    #userPhoto {
+      border-radius: 50%;
+    }
+  </style>
 </head>
 <body>
-  <div class="container text-center mt-5">
-    <h1 class="mb-4">會員系統</h1>
-    <div id="authButtons" class="d-flex justify-content-center gap-3">
-      <button id="registerButton" class="btn btn-primary">註冊</button>
-      <button id="loginButton" class="btn btn-secondary">登入</button>
+  <div class="container">
+    <div class="tab">
+      <button id="authButton" onclick="selectTab('register')">註冊</button>
+      <button id="loginButton" onclick="selectTab('login')">登入</button>
     </div>
-  </div>
-
-  <!-- Modal for displaying user information -->
-  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="userModalLabel">會員資料</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-          <img id="userPhoto" alt="User Photo" class="rounded-circle mb-3" width="100" />
-          <p id="userName" class="mb-2">姓名: </p>
-          <p id="userEmail" class="mb-2">Email: </p>
-          <p id="lastLogin" class="mb-0">最後登入時間: </p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-        </div>
-      </div>
+    <div class="auth-section">
+      <button onclick="authenticateWithGoogle()">認證</button>
+    </div>
+    <div id="user-info">
+      <p id="userName">姓名: </p>
+      <p id="userEmail">Email: </p>
+      <img id="userPhoto" alt="User Photo" width="100" />
+      <p id="lastLogin">最後登入時間: </p>
     </div>
   </div>
 
@@ -52,96 +73,36 @@
       messagingSenderId: "824252885125",
       appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
     };
+    console.log(firebase.SDK_VERSION);
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const database = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    const registerButton = document.getElementById("registerButton");
-    const loginButton = document.getElementById("loginButton");
+    let currentMode = "register";  // 預設為註冊模式
 
-    // 註冊功能
-    registerButton.addEventListener("click", () => {
-      auth.signInWithPopup(provider).then(result => {
-        const user = result.user;
-        saveUserData(user);
-        switchToViewMemberButton(user);  // 登入成功後，切換按鈕為「查看會員資料」
-        showSuccessAlert("註冊成功", `歡迎, ${user.displayName}`);
-      }).catch(error => {
-        showErrorAlert("註冊失敗", error.message);
-      });
-    });
-
-    // 登入功能
-    loginButton.addEventListener("click", () => {
-      auth.signInWithPopup(provider).then(result => {
-        const user = result.user;
-        updateLastLogin(user);
-        switchToViewMemberButton(user);  // 登入成功後，切換按鈕為「查看會員資料」
-        showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
-      }).catch(error => {
-        showErrorAlert("登入失敗", error.message);
-      });
-    });
-
-    // 登出功能
-    function logout() {
-      auth.signOut().then(() => {
-        resetToInitialButtons();  // 登出後，重置為初始按鈕
-        showSuccessAlert("登出成功", "您已成功登出！");
-      }).catch(error => {
-        showErrorAlert("登出失敗", error.message);
-      });
+    function selectTab(mode) {
+      currentMode = mode;
+      console.log(`目前模式: ${mode === 'register' ? '註冊' : '登入'}`);
     }
 
-    // 切換按鈕為「查看會員資料」
-    function switchToViewMemberButton(user) {
-      registerButton.textContent = "查看會員資料";
-      registerButton.classList.remove("btn-primary");
-      registerButton.classList.add("btn-info");
-      registerButton.onclick = showUserModal;  // 這裡將事件改為顯示會員資料
-
-      loginButton.textContent = "登出";
-      loginButton.classList.remove("btn-secondary");
-      loginButton.classList.add("btn-danger");
-      loginButton.onclick = logout;  // 這裡將事件改為登出
+    function authenticateWithGoogle() {
+      console.log("認證中...");
+      auth.signInWithPopup(provider)
+        .then(result => {
+          console.log("認證成功:", result);
+          const user = result.user;
+          if (currentMode === "register") {
+            saveUserData(user);
+          } else {
+            updateLastLogin(user);
+          }
+          displayUserData(user);
+          updateUIAfterAuth();
+        })
     }
 
-    // 重置按鈕為初始狀態
-    function resetToInitialButtons() {
-      registerButton.textContent = "註冊";
-      registerButton.classList.remove("btn-info");
-      registerButton.classList.add("btn-primary");
-      registerButton.onclick = () => auth.signInWithPopup(provider);
-
-      loginButton.textContent = "登入";
-      loginButton.classList.remove("btn-danger");
-      loginButton.classList.add("btn-secondary");
-      loginButton.onclick = () => auth.signInWithPopup(provider);
-    }
-
-    // 顯示會員資料模組
-    function showUserModal() {
-      const user = auth.currentUser;
-      if (!user) {
-        showErrorAlert("錯誤", "無法取得使用者資料，請重新登入！");
-        return;
-      }
-
-      database.ref('users/' + user.uid).once('value').then(snapshot => {
-        const data = snapshot.val();
-        document.getElementById("userName").innerText = `姓名: ${data.name}`;
-        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
-        document.getElementById("userPhoto").src = data.photoURL;
-        document.getElementById("lastLogin").innerText = `最後登入時間: ${formatDate(data.lastLogin)}`;
-
-        const userModal = new bootstrap.Modal(document.getElementById("userModal"));
-        userModal.show();
-      });
-    }
-
-    // 儲存使用者資料
     function saveUserData(user) {
       const userData = {
         name: user.displayName,
@@ -152,18 +113,17 @@
       database.ref('users/' + user.uid).set(userData);
     }
 
-    // 更新最後登入時間
     function updateLastLogin(user) {
       database.ref('users/' + user.uid).update({
         lastLogin: new Date().toISOString()
       });
     }
 
-    // 格式化日期
+    // Custom date formatting function
     function formatDate(date) {
       const d = new Date(date);
       const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0'); // Add leading zero
       const day = String(d.getDate()).padStart(2, '0');
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
@@ -171,33 +131,50 @@
       return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
     }
 
-    // SweetAlert2 提示訊息
-    function showSuccessAlert(title, text) {
-      Swal.fire({
-        icon: 'success',
-        title: title,
-        text: text,
-        confirmButtonText: '確定'
+    function displayUserData(user) {
+      database.ref('users/' + user.uid).once('value').then(snapshot => {
+        const data = snapshot.val();
+        document.getElementById("userName").innerText = `姓名: ${data.name}`;
+        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
+        document.getElementById("userPhoto").src = data.photoURL;
+        
+        // Format the last login time
+        const formattedLastLogin = formatDate(data.lastLogin);
+        document.getElementById("lastLogin").innerText = `最後登入時間: ${formattedLastLogin}`;
+        
+        document.getElementById("user-info").style.display = "block";
       });
     }
 
-    function showErrorAlert(title, text) {
-      Swal.fire({
-        icon: 'error',
-        title: title,
-        text: text,
-        confirmButtonText: '確定'
-      });
+    function updateUIAfterAuth() {
+      // 更新按鈕顯示為會員資料和登出
+      document.getElementById("authButton").style.display = "none";
+      document.getElementById("loginButton").style.display = "none";
+      
+      // 顯示會員資料和登出按鈕
+      const memberButton = document.createElement("button");
+      memberButton.innerText = "會員資料";
+      memberButton.onclick = showUserInfo;
+      document.querySelector(".container").appendChild(memberButton);
+
+      const logoutButton = document.createElement("button");
+      logoutButton.innerText = "登出";
+      logoutButton.onclick = logout;
+      document.querySelector(".container").appendChild(logoutButton);
     }
 
-    // Firebase 認證狀態監聽
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        switchToViewMemberButton(user);
-      } else {
-        resetToInitialButtons();
-      }
-    });
+    function showUserInfo() {
+      document.getElementById("user-info").style.display = "block";
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        // 重設 UI
+        document.getElementById("user-info").style.display = "none";
+        document.getElementById("authButton").style.display = "inline-block";
+        document.getElementById("loginButton").style.display = "inline-block";
+      });
+    }
   </script>
 </body>
 </html>
