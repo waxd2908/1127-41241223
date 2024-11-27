@@ -3,81 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google 認證與會員系統</title>
+  <title>會員系統</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database-compat.js"></script>
-  <style>
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 100px;
-    }
-    .auth-buttons {
-      display: flex;
-      gap: 20px;
-    }
-    .auth-buttons button {
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      z-index: 1000;
-      width: 300px;
-      text-align: center;
-    }
-    .modal h2 {
-      margin-bottom: 20px;
-    }
-    .modal img {
-      border-radius: 50%;
-      margin-bottom: 20px;
-    }
-    .modal button {
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    .overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 999;
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>會員系統</h1>
-    <div class="auth-buttons">
-      <button id="registerButton">註冊</button>
-      <button id="loginButton">登入</button>
+  <div class="container text-center mt-5">
+    <h1 class="mb-4">會員系統</h1>
+    <div id="authButtons" class="d-flex justify-content-center gap-3">
+      <button id="registerButton" class="btn btn-primary">註冊</button>
+      <button id="loginButton" class="btn btn-secondary">登入</button>
     </div>
   </div>
 
   <!-- Modal for displaying user information -->
-  <div class="overlay" id="overlay"></div>
-  <div class="modal" id="userModal">
-    <h2>會員資料</h2>
-    <img id="userPhoto" alt="User Photo" width="100" />
-    <p id="userName">姓名: </p>
-    <p id="userEmail">Email: </p>
-    <p id="lastLogin">最後登入時間: </p>
-    <button onclick="closeModal()">關閉</button>
+  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">會員資料</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="userPhoto" alt="User Photo" class="rounded-circle mb-3" width="100" />
+          <p id="userName" class="mb-2">姓名: </p>
+          <p id="userEmail" class="mb-2">Email: </p>
+          <p id="lastLogin" class="mb-0">最後登入時間: </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -103,10 +63,10 @@
         const user = result.user;
         saveUserData(user);
         switchToViewMemberButton();
-        alert(`註冊成功！歡迎, ${user.displayName}`);
+        showToast("註冊成功！歡迎, " + user.displayName);
       }).catch(error => {
         console.error("註冊失敗", error);
-        alert("註冊失敗，請稍後再試！");
+        showToast("註冊失敗，請稍後再試！");
       });
     });
 
@@ -116,10 +76,10 @@
         const user = result.user;
         updateLastLogin(user);
         switchToViewMemberButton();
-        alert(`登入成功！歡迎回來, ${user.displayName}`);
+        showToast("登入成功！歡迎回來, " + user.displayName);
       }).catch(error => {
         console.error("登入失敗", error);
-        alert("登入失敗，請稍後再試！");
+        showToast("登入失敗，請稍後再試！");
       });
     });
 
@@ -127,34 +87,29 @@
     function switchToViewMemberButton() {
       const registerButton = document.getElementById("registerButton");
       registerButton.textContent = "查看會員資料";
+      registerButton.classList.remove("btn-primary");
+      registerButton.classList.add("btn-info");
       registerButton.onclick = showUserModal;
     }
 
-    // 顯示會員資料的模組
+    // 顯示會員資料模組
     function showUserModal() {
       const user = auth.currentUser;
       if (!user) {
-        alert("無法取得使用者資料，請重新登入！");
+        showToast("無法取得使用者資料，請重新登入！");
         return;
       }
 
-      // 取得使用者資料並顯示於模組中
       database.ref('users/' + user.uid).once('value').then(snapshot => {
         const data = snapshot.val();
         document.getElementById("userName").innerText = `姓名: ${data.name}`;
         document.getElementById("userEmail").innerText = `Email: ${data.email}`;
         document.getElementById("userPhoto").src = data.photoURL;
         document.getElementById("lastLogin").innerText = `最後登入時間: ${formatDate(data.lastLogin)}`;
-        
-        document.getElementById("overlay").style.display = "block";
-        document.getElementById("userModal").style.display = "block";
-      });
-    }
 
-    // 關閉模組
-    function closeModal() {
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("userModal").style.display = "none";
+        const userModal = new bootstrap.Modal(document.getElementById("userModal"));
+        userModal.show();
+      });
     }
 
     // 格式化日期
@@ -168,7 +123,7 @@
       return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
 
-    // 儲存使用者資料（註冊模式）
+    // 儲存使用者資料
     function saveUserData(user) {
       const userData = {
         name: user.displayName,
@@ -179,10 +134,37 @@
       database.ref('users/' + user.uid).set(userData);
     }
 
-    // 更新使用者最後登入時間（登入模式）
+    // 更新最後登入時間
     function updateLastLogin(user) {
       database.ref('users/' + user.uid).update({
         lastLogin: new Date().toISOString()
+      });
+    }
+
+    // 顯示 Bootstrap Toast 訊息
+    function showToast(message) {
+      const toastContainer = document.createElement("div");
+      toastContainer.className = "toast-container position-fixed bottom-0 end-0 p-3";
+      toastContainer.style.zIndex = 1055;
+
+      const toast = document.createElement("div");
+      toast.className = "toast align-items-center text-white bg-primary border-0";
+      toast.setAttribute("role", "alert");
+
+      const toastBody = document.createElement("div");
+      toastBody.className = "toast-body";
+      toastBody.textContent = message;
+
+      toast.appendChild(toastBody);
+      toastContainer.appendChild(toast);
+      document.body.appendChild(toastContainer);
+
+      const bootstrapToast = new bootstrap.Toast(toast);
+      bootstrapToast.show();
+
+      // 移除 Toast
+      toast.addEventListener("hidden.bs.toast", () => {
+        document.body.removeChild(toastContainer);
       });
     }
   </script>
