@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 
-
-    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -272,9 +270,18 @@
                                         <p class="mb-1">${note.content}</p>
                                         <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
                                     </div>
-                                    <button class="btn btn-danger btn-sm" onclick="deleteNote('${noteId}')">刪除</button>
+                                    <button class="btn btn-danger btn-sm delete-btn" data-id="${noteId}">刪除</button>
                                 `;
                                 notesListElement.appendChild(noteItem);
+                            });
+
+                            // 給每個刪除按鈕綁定事件
+                            const deleteButtons = document.querySelectorAll('.delete-btn');
+                            deleteButtons.forEach((button) => {
+                                button.addEventListener('click', (e) => {
+                                    const noteId = e.target.getAttribute('data-id');
+                                    deleteNote(noteId);
+                                });
                             });
                         } else {
                             notesListElement.innerHTML = '<p class="text-muted">目前沒有任何筆記。</p>';
