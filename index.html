@@ -79,7 +79,10 @@
         const user = result.user;
         updateLastLogin(user);
         switchToViewMemberButton();
-        showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
+        // 等待 Firebase 狀態更新後顯示 SweetAlert
+        setTimeout(() => {
+          showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
+        }, 1000);  // 延遲 1 秒鐘顯示提示
       }).catch(error => {
         showErrorAlert("登入失敗", error.message);
       });
