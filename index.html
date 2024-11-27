@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 
@@ -5,7 +6,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firebase CRUD 筆記系統</title>
-    <!-- 引入 Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -19,89 +19,45 @@
             <button id="logoutBtn" class="btn btn-danger d-none">登出</button>
         </div>
 
-        <!-- 用戶資料區 -->
-        <div class="modal fade" id="userInfoModal" tabindex="-1" aria-labelledby="userInfoModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="userInfoModalLabel">會員信息</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="container mt-4">
+        <h1 class="mb-4">筆記管理系統</h1>
+
+        <!-- 新增筆記表單 -->
+        <form id="noteForm" class="mb-4">
+            <div class="mb-3">
+                <label for="noteTitle" class="form-label">標題</label>
+                <input type="text" id="noteTitle" class="form-control" placeholder="輸入筆記標題" required>
+            </div>
+            <div class="mb-3">
+                <label for="noteContent" class="form-label">內容</label>
+                <textarea id="noteContent" class="form-control" rows="3" placeholder="輸入筆記內容" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">筆記權限</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="notePrivacy" id="privateNote" value="private" checked>
+                        <label class="form-check-label" for="privateNote">私人</label>
                     </div>
-                    <div class="modal-body text-center">
-                        <img id="modalUserPhoto" src="" alt="用戶頭像" class="img-fluid rounded-circle mb-3"
-                            style="width: 100px;">
-                        <h5 id="modalUserName" class="card-title"></h5>
-                        <p id="modalUserEmail" class="card-text"></p>
-                        <p id="modalLastLogin" class="card-text text-muted"></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="notePrivacy" id="publicNote" value="public">
+                        <label class="form-check-label" for="publicNote">公開</label>
                     </div>
                 </div>
             </div>
+            <button type="submit" class="btn btn-primary">新增筆記</button>
+        </form>
+
+        <!-- 私人筆記列表 -->
+        <div id="notesList">
+            <h4>私人筆記</h4>
+            <div class="list-group"></div>
         </div>
 
-        <!-- 筆記管理區 -->
-        <div id="crudSection" class="d-none mt-5">
-            <h3 class="text-center">筆記管理</h3>
-            <form id="noteForm" class="mb-4">
-                <div class="mb-3">
-                    <label for="noteTitle" class="form-label">標題</label>
-                    <input type="text" id="noteTitle" class="form-control" placeholder="輸入筆記標題" required>
-                </div>
-                <div class="mb-3">
-                    <label for="noteContent" class="form-label">內容</label>
-                    <textarea id="noteContent" class="form-control" rows="3" placeholder="輸入筆記內容" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="noteVisibility" class="form-label">可見性</label>
-                    <select id="noteVisibility" class="form-select" required>
-                        <option value="public">公開</option>
-                        <option value="private">私人</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">新增筆記</button>
-            </form>
-
-            <!-- 顯示筆記區 -->
-            <div id="notesList" class="mt-4">
-                <h4>你的筆記</h4>
-                <div class="list-group"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 修改筆記的表單 -->
-    <div id="editNoteModal" class="modal fade" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editNoteModalLabel">修改筆記</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="editNoteTitle" class="form-label">標題</label>
-                        <input type="text" id="editNoteTitle" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editNoteContent" class="form-label">內容</label>
-                        <textarea id="editNoteContent" class="form-control" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editNoteVisibility" class="form-label">可見性</label>
-                        <select id="editNoteVisibility" class="form-select" required>
-                            <option value="public">公開</option>
-                            <option value="private">私人</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="saveEditNoteBtn">儲存修改</button>
-                </div>
-            </div>
+        <!-- 公開筆記列表 -->
+        <div id="publicNotesList" class="mt-4">
+            <h4>公開筆記</h4>
+            <div class="list-group"></div>
         </div>
     </div>
 
@@ -124,7 +80,9 @@
                 appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
             };
 
-            firebase.initializeApp(firebaseConfig);
+            const app = firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+
 
             const auth = firebase.auth();
             const database = firebase.database();
@@ -168,45 +126,57 @@
                     });
             });
 
-            // 檢查用戶是否存在於 Firebase 中
-            function checkIfUserExists(user) {
-                const userRef = database.ref('users/' + user.uid);
-                userRef.once('value', (snapshot) => {
-                    if (snapshot.exists()) {
-                        currentUserId = user.uid;
-                        loadNotes();
-                    } else {
-                        saveUserData(user);
-                    }
-                });
-            }
-
             // 儲存用戶資料
             function saveUserData(user) {
-                const userRef = database.ref('users/' + user.uid);
-                userRef.set({
-                    displayName: user.displayName,
+                const userData = {
+                    name: user.displayName,
                     email: user.email,
                     photoURL: user.photoURL,
                     lastLogin: new Date().toISOString()
-                })
+                };
+
+                database.ref('users/' + user.uid).set(userData)
                     .then(() => {
                         currentUserId = user.uid;
-                        showUserInfo(user);
+                        displayUserData(userData);
                         loadNotes();
                     })
                     .catch((error) => {
-                        showAlert("error", "儲存用戶資料失敗", error.message);
+                        console.error('保存用戶資料失敗：', error);
                     });
             }
 
-            // 顯示用戶信息
-            function showUserInfo(user) {
-                document.getElementById('modalUserName').innerText = user.displayName;
-                document.getElementById('modalUserEmail').innerText = user.email;
-                document.getElementById('modalLastLogin').innerText = '上次登入：' + new Date().toLocaleString();
-                document.getElementById('modalUserPhoto').src = user.photoURL;
+            // 檢查用戶是否存在
+            function checkIfUserExists(user) {
+                database.ref('users/' + user.uid).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const userData = snapshot.val();
+                            displayUserData(userData);
+                            currentUserId = user.uid;
+                            loadNotes();
+                        } else {
+                            saveUserData(user);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('檢查用戶失敗：', error);
+                    });
+            }
+
+            // 顯示用戶資料
+            function displayUserData(userData) {
+                document.getElementById('modalUserPhoto').src = userData.photoURL;
+                document.getElementById('modalUserName').textContent = `姓名：${userData.name}`;
+                document.getElementById('modalUserEmail').textContent = `Email：${userData.email}`;
+                document.getElementById('modalLastLogin').textContent = `最後登入時間：${userData.lastLogin}`;
+
                 document.getElementById('showUserInfoBtn').classList.remove('d-none');
+                document.getElementById('showUserInfoBtn').addEventListener('click', () => {
+                    const modal = new bootstrap.Modal(document.getElementById('userInfoModal'));
+                    modal.show();
+                });
+
                 document.getElementById('logoutBtn').classList.remove('d-none');
                 document.getElementById('loginBtn').classList.add('d-none');
                 document.getElementById('registerBtn').classList.add('d-none');
@@ -232,97 +202,100 @@
                 document.getElementById('crudSection').classList.add('d-none');
             }
 
-            // 新增筆記
+             // 新增筆記
             document.getElementById('noteForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-
+    
                 const title = document.getElementById('noteTitle').value;
                 const content = document.getElementById('noteContent').value;
-                const visibility = document.getElementById('noteVisibility').value;
-
+                const privacy = document.querySelector('input[name="notePrivacy"]:checked').value;
+    
                 if (title && content) {
                     const newNote = {
                         title,
                         content,
-                        timestamp: new Date().toISOString(),
-                        visibility
+                        privacy,
+                        timestamp: new Date().toISOString()
                     };
-
+    
                     const newNoteRef = database.ref('notes/' + currentUserId).push();
                     newNoteRef.set(newNote)
                         .then(() => {
-                            showAlert("success", "筆記新增成功！");
+                            alert("筆記新增成功！");
                             loadNotes();
                             document.getElementById('noteForm').reset();
                         })
                         .catch((error) => {
                             console.error('新增筆記失敗：', error);
-                            showAlert("error", "無法新增筆記", error.message);
+                            alert("無法新增筆記，請稍後再試。");
                         });
-                }
-            });
+                    }
+                });
 
-            // 加載筆記
-            function loadNotes() {
-                if (!currentUserId) {
-                    console.error("用戶未登入，無法加載筆記");
-                    return;
-                }
-
+                // 加載筆記
+                function loadNotes() {
                 const notesListElement = document.querySelector('#notesList .list-group');
+                const publicNotesListElement = document.querySelector('#publicNotesList .list-group');
                 notesListElement.innerHTML = '<p class="text-muted">加載中...</p>';
-
-                database.ref(`notes/${currentUserId}`).once('value')
+                publicNotesListElement.innerHTML = '<p class="text-muted">加載中...</p>';
+    
+                database.ref('notes').once('value')
                     .then((snapshot) => {
                         if (snapshot.exists()) {
                             notesListElement.innerHTML = '';
-                            const notes = snapshot.val();
-
-                            Object.keys(notes).forEach((noteId) => {
-                                const note = notes[noteId];
-                                if (note.visibility === 'public' || note.visibility === 'private' && currentUserId) {
-                                    const noteItem = document.createElement('div');
-                                    noteItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                                    noteItem.innerHTML = `
-                                        <div>
-                                            <h5 class="mb-1">${note.title}</h5>
-                                            <p class="mb-1">${note.content}</p>
-                                            <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
-                                        </div>
-                                        <button class="btn btn-warning btn-sm edit-btn" data-id="${noteId}">修改</button>
-                                        <button class="btn btn-danger btn-sm delete-btn" data-id="${noteId}">刪除</button>
-                                    `;
-                                    notesListElement.appendChild(noteItem);
-                                }
-                            });
-
-                            // 給每個修改按鈕綁定事件
-                            const editButtons = document.querySelectorAll('.edit-btn');
-                            editButtons.forEach((button) => {
-                                button.addEventListener('click', (e) => {
-                                    const noteId = e.target.getAttribute('data-id');
-                                    const note = notes[noteId];
-                                    openEditNoteModal(noteId, note.title, note.content, note.visibility);
+                            publicNotesListElement.innerHTML = '';
+    
+                            const allNotes = snapshot.val();
+    
+                            Object.keys(allNotes).forEach((userId) => {
+                                Object.keys(allNotes[userId]).forEach((noteId) => {
+                                    const note = allNotes[userId][noteId];
+    
+                                    if (userId === currentUserId || note.privacy === 'public') {
+                                        const noteItem = document.createElement('div');
+                                        noteItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                                        noteItem.innerHTML = `
+                                            <div>
+                                                <h5 class="mb-1">${note.title}</h5>
+                                                <p class="mb-1">${note.content}</p>
+                                                <small class="text-muted">${new Date(note.timestamp).toLocaleString()}</small>
+                                            </div>
+                                        `;
+    
+                                        if (userId === currentUserId) {
+                                            noteItem.innerHTML += `
+                                                <button class="btn btn-warning btn-sm edit-btn" data-id="${noteId}">修改</button>
+                                                <button class="btn btn-danger btn-sm delete-btn" data-id="${noteId}">刪除</button>
+                                            `;
+                                            notesListElement.appendChild(noteItem);
+                                        } else if (note.privacy === 'public') {
+                                            publicNotesListElement.appendChild(noteItem);
+                                        }
+                                    }
                                 });
                             });
-
-                            // 給每個刪除按鈕綁定事件
-                            const deleteButtons = document.querySelectorAll('.delete-btn');
-                            deleteButtons.forEach((button) => {
-                                button.addEventListener('click', (e) => {
-                                    const noteId = e.target.getAttribute('data-id');
-                                    deleteNote(noteId);
-                                });
-                            });
+    
+                            if (!notesListElement.innerHTML.trim()) {
+                                notesListElement.innerHTML = '<p class="text-muted">目前沒有私人筆記。</p>';
+                            }
+    
+                            if (!publicNotesListElement.innerHTML.trim()) {
+                                publicNotesListElement.innerHTML = '<p class="text-muted">目前沒有公開筆記。</p>';
+                            }
                         } else {
                             notesListElement.innerHTML = '<p class="text-muted">目前沒有任何筆記。</p>';
+                            publicNotesListElement.innerHTML = '<p class="text-muted">目前沒有公開筆記。</p>';
                         }
                     })
                     .catch((error) => {
                         console.error('讀取筆記失敗：', error);
                         notesListElement.innerHTML = '<p class="text-danger">無法加載筆記，請稍後再試。</p>';
+                        publicNotesListElement.innerHTML = '<p class="text-danger">無法加載公開筆記，請稍後再試。</p>';
                     });
             }
+    
+            // 初始化載入筆記
+            loadNotes();
 
             // 開啟修改筆記模態框並填充資料
             function openEditNoteModal(noteId, title, content, visibility) {
@@ -333,7 +306,7 @@
 
                 // 當用戶點擊儲存按鈕時更新筆記
                 saveButton.onclick = () => saveEditedNote(noteId);
-
+                
                 // 顯示模態框
                 const editModal = new bootstrap.Modal(document.getElementById('editNoteModal'));
                 editModal.show();
@@ -349,8 +322,8 @@
                     const noteData = {
                         title,
                         content,
-                        timestamp: new Date().toISOString(),
-                        visibility
+                        visibility,
+                        timestamp: new Date().toISOString()
                     };
 
                     // 更新 Firebase 中的筆記
