@@ -37,6 +37,9 @@
     <div id="view-profile-section" class="d-none">
       <!-- View profile button will be here after login -->
     </div>
+    <div id="logout-section" class="d-none">
+      <!-- Logout button will appear here after login -->
+    </div>
   </div>
 
   <script>
@@ -180,27 +183,6 @@
         title: '錯誤',
         text: message,
         confirmButtonText: '重新嘗試'
-      });
-    }
-
-    // Logout and restore initial state
-    function logout() {
-      auth.signOut().then(() => {
-        // Show register button again
-        document.getElementById("register-btn").style.display = "inline-block";
-        document.getElementById("login-btn").style.display = "inline-block";
-
-        // Hide member info and view profile button
-        const memberInfo = document.getElementById("member-info");
-        memberInfo.classList.add("d-none");
-
-        // Remove the "查看會員資料" and "登出" buttons
-        const viewProfileBtnSection = document.getElementById("view-profile-section");
-        viewProfileBtnSection.innerHTML = ''; // Clear previous buttons
-
-        showSuccessAlert('登出成功！');
-      }).catch(error => {
-        showErrorAlert('登出失敗，請再試一次。');
       });
     }
   </script>
