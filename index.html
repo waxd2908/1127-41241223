@@ -66,7 +66,7 @@
       auth.signInWithPopup(provider).then(result => {
         const user = result.user;
         saveUserData(user);
-        switchToViewMemberButton();
+        switchToViewMemberButton(user);  // 登入成功後，切換按鈕為「查看會員資料」
         showSuccessAlert("註冊成功", `歡迎, ${user.displayName}`);
       }).catch(error => {
         showErrorAlert("註冊失敗", error.message);
@@ -78,11 +78,8 @@
       auth.signInWithPopup(provider).then(result => {
         const user = result.user;
         updateLastLogin(user);
-        switchToViewMemberButton();
-        // 等待 Firebase 狀態更新後顯示 SweetAlert
-        setTimeout(() => {
-          showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
-        }, 1000);  // 延遲 1 秒鐘顯示提示
+        switchToViewMemberButton(user);  // 登入成功後，切換按鈕為「查看會員資料」
+        showSuccessAlert("登入成功", `歡迎回來, ${user.displayName}`);
       }).catch(error => {
         showErrorAlert("登入失敗", error.message);
       });
@@ -91,7 +88,7 @@
     // 登出功能
     function logout() {
       auth.signOut().then(() => {
-        resetToInitialButtons();
+        resetToInitialButtons();  // 登出後，重置為初始按鈕
         showSuccessAlert("登出成功", "您已成功登出！");
       }).catch(error => {
         showErrorAlert("登出失敗", error.message);
@@ -99,7 +96,7 @@
     }
 
     // 切換按鈕為「查看會員資料」
-    function switchToViewMemberButton() {
+    function switchToViewMemberButton(user) {
       registerButton.textContent = "查看會員資料";
       registerButton.classList.remove("btn-primary");
       registerButton.classList.add("btn-info");
@@ -196,7 +193,7 @@
     // Firebase 認證狀態監聽
     auth.onAuthStateChanged(user => {
       if (user) {
-        switchToViewMemberButton();
+        switchToViewMemberButton(user);
       } else {
         resetToInitialButtons();
       }
