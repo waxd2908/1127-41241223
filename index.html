@@ -34,6 +34,9 @@
     <div id="member-info" class="d-none">
       <!-- Member info will be dynamically added here -->
     </div>
+    <div id="view-profile-section" class="d-none">
+      <!-- View profile button will be here after login -->
+    </div>
   </div>
 
   <script>
@@ -74,7 +77,7 @@
             updateLastLogin(user);
             showSuccessAlert('登入成功！');
           }
-          replaceRegisterButtonWithUserInfo(user);
+          showViewProfileButton(user);
         })
         .catch(error => {
           showErrorAlert('認證失敗，請再試一次。');
@@ -97,18 +100,41 @@
       });
     }
 
-    // Replace the "註冊" button with the user's information
-    function replaceRegisterButtonWithUserInfo(user) {
-      const memberInfo = document.getElementById("member-info");
-      const registerBtn = document.getElementById("register-btn");
-      const loginBtn = document.getElementById("login-btn");
+    // Show "查看會員資料" button in the original "註冊" position after successful login
+    function showViewProfileButton(user) {
+      // Hide the "註冊" and "登入" buttons
+      document.getElementById("register-btn").style.display = "none";
+      document.getElementById("login-btn").style.display = "none";
 
-      // Fetch data from the database
+      // Create the "查看會員資料" button and place it in the "註冊" button's location
+      const viewProfileBtn = document.createElement("button");
+      viewProfileBtn.classList.add("btn", "btn-info");
+      viewProfileBtn.innerText = "查看會員資料";
+      viewProfileBtn.onclick = function() {
+        showMemberInfo();
+      };
+
+      // Insert the button where the "註冊" button was
+      const registerBtnSection = document.getElementById("register-btn").parentElement;
+      registerBtnSection.appendChild(viewProfileBtn);
+
+      // Show the "登出" button in place of the "登入" button
+      const logoutBtn = document.createElement("button");
+      logoutBtn.classList.add("btn", "btn-danger");
+      logoutBtn.innerText = "登出";
+      logoutBtn.onclick = logout;
+
+      // Insert the logout button where the "登入" button was
+      const loginBtnSection = document.getElementById("login-btn").parentElement;
+      loginBtnSection.appendChild(logoutBtn);
+    }
+
+    // Show member info when "查看會員資料" button is clicked
+    function showMemberInfo() {
+      const user = auth.currentUser;
       database.ref('users/' + user.uid).once('value').then(snapshot => {
         const data = snapshot.val();
-
-        // Hide register button
-        registerBtn.style.display = "none";
+        const memberInfo = document.getElementById("member-info");
 
         // Show member info in Bootstrap card
         memberInfo.innerHTML = `
@@ -118,9 +144,10 @@
               <h5 class="card-title">${data.name}</h5>
               <p class="card-text">${data.email}</p>
               <p class="text-muted">最後登入: ${formatDate(data.lastLogin)}</p>
-              <button class="btn btn-danger" onclick="logout()">登出</button>
             </div>
           </div>`;
+
+        // Show member info section
         memberInfo.classList.remove("d-none");
       });
     }
@@ -161,11 +188,15 @@
       auth.signOut().then(() => {
         // Show register button again
         document.getElementById("register-btn").style.display = "inline-block";
+        document.getElementById("login-btn").style.display = "inline-block";
 
-        // Hide member info
+        // Hide member info and view profile button
         const memberInfo = document.getElementById("member-info");
         memberInfo.classList.add("d-none");
-        memberInfo.innerHTML = "";
+
+        // Remove the "查看會員資料" and "登出" buttons
+        const viewProfileBtnSection = document.getElementById("view-profile-section");
+        viewProfileBtnSection.innerHTML = ''; // Clear previous buttons
 
         showSuccessAlert('登出成功！');
       }).catch(error => {
